@@ -96,8 +96,6 @@ app.post("/webhook", async (req,res)=>{
 
     const pix = req.body.pix
 
-    const pix = req.body.pix
-
     if(!pix){
       return res.sendStatus(200)
     }
