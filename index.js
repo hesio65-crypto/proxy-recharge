@@ -90,7 +90,7 @@ app.post("/criar-pix", async (req,res)=>{
 })
 
 // WEBHOOK EFI
-app.post("/webhook", async (req,res)=>{
+app.post("/webhook/pix", async (req,res)=>{
 
   try{
 
