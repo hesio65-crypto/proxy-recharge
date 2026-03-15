@@ -1,5 +1,6 @@
 const express = require("express")
 const Gerencianet = require("gn-api-sdk-node")
+const crypto = require("crypto")
 
 const app = express()
 app.use(express.json())
@@ -13,17 +14,38 @@ const options = {
 
 const gn = new Gerencianet(options)
 
+const planos = {
+  1: 10,
+  3: 22,
+  5: 34,
+  7: 38,
+  10: 51,
+  20: 97
+}
+
+function gerarTxid() {
+  return crypto.randomBytes(16).toString("hex").substring(0, 32)
+}
+
 app.post("/criar-pix", async (req, res) => {
+
+  const { subuser_id, gigas } = req.body
+
+  if (!planos[gigas]) {
+    return res.json({ erro: "Plano inválido" })
+  }
+
+  const valor = planos[gigas].toFixed(2)
+
+  const txid = gerarTxid()
+
+  const params = { txid }
 
   const body = {
     calendario: { expiracao: 3600 },
-    valor: { original: "5.00" },
-    chave: "SUA_CHAVE_PIX",
-    solicitacaoPagador: "Teste PIX"
-  }
-
-  const params = {
-    txid: Math.random().toString(36).substring(2, 30)
+    valor: { original: valor },
+    chave: "9f3141e7-865a-4411-bbcd-b1a7c30fd7c3",
+    solicitacaoPagador: "Recarga Proxy"
   }
 
   try {
@@ -35,24 +57,20 @@ app.post("/criar-pix", async (req, res) => {
     })
 
     res.json({
-      txid: charge.txid,
-      pix: qr.qrcode,
+      txid: txid,
+      pix: charge.pixCopiaECola,
       qrcode: qr.imagemQrcode
     })
 
   } catch (error) {
+
     console.log(error)
-    res.status(500).json(error)
+    res.json(error)
+
   }
 
 })
 
-app.get("/", (req,res)=>{
-  res.send("Servidor funcionando")
-})
-
-const PORT = process.env.PORT || 3000
-
-app.listen(PORT, () => {
-  console.log("Servidor rodando")
+app.listen(3000, () => {
+  console.log("API rodando na porta 3000")
 })
