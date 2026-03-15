@@ -96,6 +96,8 @@ app.post("/webhook", async (req,res)=>{
 
     const pix = req.body.pix
 
+    const pix = req.body.pix
+
     if(!pix){
       return res.sendStatus(200)
     }
@@ -120,8 +122,8 @@ app.post("/webhook", async (req,res)=>{
       const auth = await axios.post(
         "https://api.dataimpulse.com/reseller/user/token/get",
         {
-          login:thayslima270319@gmail.com,
-          password:fVyIYoCRbCVd4OKPsPAHjB8gzK76MAbF
+          login:DI_LOGIN,
+          password:DI_PASSWORD
         }
       )
 
