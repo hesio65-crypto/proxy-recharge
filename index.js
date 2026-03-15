@@ -6,15 +6,17 @@ const crypto = require("crypto")
 const app = express()
 app.use(express.json())
 
+// CONFIG EFI
 const options = {
   sandbox: false,
-  client_id: process.env.Client_Id_c14fdae342370b1c9f86efa3284aa3bc2f592d19,
-  client_secret: process.env.Client_Secret_aeb560538e5e6a1b177ca40be82db0786706f53d,
+  client_id: process.env.EFI_CLIENT_ID || "Client_Id_c14fdae342370b1c9f86efa3284aa3bc2f592d19",
+  client_secret: process.env.EFI_CLIENT_SECRET || "Client_Secret_aeb560538e5e6a1b177ca40be82db0786706f53d",
   certificate: "./producao-854589-rechargehz3.p12"
 }
 
 const gn = new Gerencianet(options)
 
+// salvar pagamentos
 let pagamentos = {}
 
 function gerarTxid() {
@@ -33,32 +35,28 @@ function valorPorGiga(gigas) {
   return tabela[gigas]
 }
 
+// CRIAR PIX
 app.post("/criar-pix", async (req, res) => {
 
-  const { subuser_id, gigas } = req.body
-
-  if (!subuser_id || !gigas) {
-    return res.status(400).json({ erro: "dados inválidos" })
-  }
-
-  const valor = valorPorGiga(gigas)
-
-  const txid = gerarTxid()
-
-  const body = {
-    calendario: {
-      expiracao: 3600
-    },
-    valor: {
-      original: valor.toFixed(2)
-    },
-    chave: process.env.PIX_KEY,
-    solicitacaoPagador: `Recarga ${gigas}GB`
-  }
-
-  const params = { txid }
-
   try {
+
+    const { subuser_id, gigas } = req.body
+
+    if (!subuser_id || !gigas) {
+      return res.status(400).json({ erro: "dados inválidos" })
+    }
+
+    const valor = valorPorGiga(gigas)
+    const txid = gerarTxid()
+
+    const body = {
+      calendario: { expiracao: 3600 },
+      valor: { original: valor.toFixed(2) },
+      chave: process.env.PIX_KEY || "SUA_CHAVE_PIX",
+      solicitacaoPagador: `Recarga ${gigas}GB`
+    }
+
+    const params = { txid }
 
     const charge = await gn.pixCreateCharge(params, body)
 
@@ -79,11 +77,15 @@ app.post("/criar-pix", async (req, res) => {
     })
 
   } catch (err) {
+
+    console.log("ERRO PIX:", err)
     res.status(500).json(err)
+
   }
 
 })
 
+// WEBHOOK EFI
 app.post("/webhook", async (req, res) => {
 
   try {
@@ -95,11 +97,9 @@ app.post("/webhook", async (req, res) => {
     for (const pagamento of pix) {
 
       const txid = pagamento.txid
-
       const pedido = pagamentos[txid]
 
       if (!pedido) continue
-
       if (pedido.status === "pago") continue
 
       await axios.post(
@@ -120,7 +120,7 @@ app.post("/webhook", async (req, res) => {
 
   } catch (err) {
 
-    console.log(err)
+    console.log("ERRO WEBHOOK:", err)
     res.sendStatus(500)
 
   }
