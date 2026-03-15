@@ -69,6 +69,12 @@ app.post("/criar-pix", async (req, res) => {
 
   }
 
+app.post("/webhook", async (req, res) => {
+
+  console.log("Pagamento recebido:", req.body)
+
+  res.sendStatus(200)
+
 })
 
 app.listen(3000, () => {
