@@ -90,62 +90,76 @@ app.post("/criar-pix", async (req,res)=>{
 })
 
 // WEBHOOK EFI
-app.post("/webhook", async (req, res) => {
-  try {
-    console.log("WEBHOOK RECEBIDO");
-    console.log("HEADERS:", JSON.stringify(req.headers || {}, null, 2));
-    console.log("BODY:", JSON.stringify(req.body || {}, null, 2));
+app.post("/webhook", async (req,res)=>{
 
-    const body = req.body || {};
-    const pix = body.pix || [];
+  try{
 
-    if (!Array.isArray(pix) || pix.length === 0) {
-      // Nada para processar
-      return res.status(200).send("ok");
+    const pix = req.body.pix
+
+    const pix = req.body.pix
+
+    if(!pix){
+      return res.sendStatus(200)
     }
 
-    for (const p of pix) {
-      const txid = p.txid;
+    for(const pagamento of pix){
 
-      if (!txid) continue;
-      if (!pagamentos[txid]) continue;
-      if (pagamentos[txid].status === "pago") continue;
+      const txid = pagamento.txid
 
-      const { subuser_id, gigas } = pagamentos[txid];
-      console.log("PIX pago:", txid);
+      if(!pagamentos[txid]){
+        continue
+      }
+
+      if(pagamentos[txid].status === "pago"){
+        continue
+      }
+
+      const {subuser_id,gigas} = pagamentos[txid]
+
+      console.log("PIX pago:",txid)
 
       // gerar token DataImpulse
       const auth = await axios.post(
         "https://api.dataimpulse.com/reseller/user/token/get",
         {
-          login: thayslima270319@gmail.com,
-          password: fVyIYoCRbCVd4OKPsPAHjB8gzK76MAbF,
+          login:thayslima270319@gmail.com,
+          password:fVyIYoCRbCVd4OKPsPAHjB8gzK76MAbF
         }
-      );
+      )
 
-      const token = auth.data.token;
+      const token = auth.data.token
 
       // recarregar proxy
       const recharge = await axios.post(
         "https://api.dataimpulse.com/reseller/sub-user/balance/add",
         {
-          subuser_id: subuser_id,
-          traffic: gigas,
+          subuser_id:subuser_id,
+          traffic:gigas
         },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers:{
+            Authorization:`Bearer ${token}`
+          }
         }
-      );
+      )
 
-      console.log("Proxy recarregada:", recharge.data);
-      pagamentos[txid].status = "pago";
+      console.log("Proxy recarregada:",recharge.data)
+
+      pagamentos[txid].status = "pago"
+
     }
 
-    return res.status(200).send("ok");
-  } catch (err) {
-    console.log("ERRO NO WEBHOOK:", err);
-    return res.status(200).send("ok"); // não quebrar o webhook
+    res.sendStatus(200)
+
+  }catch(err){
+
+    console.log(err)
+    res.sendStatus(500)
+
   }
-});
+
+})
+
+app.listen(3000,()=>{
+  console.log("Servidor rodando")
+})
