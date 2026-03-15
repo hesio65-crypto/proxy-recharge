@@ -69,6 +69,33 @@ app.post("/criar-pix", async (req, res) => {
 
   }
 
+app.post("/webhook", async (req, res) => {
+
+  try {
+
+    const pix = req.body.pix
+
+    if (!pix) return res.sendStatus(200)
+
+    for (const pagamento of pix) {
+
+      const txid = pagamento.txid
+
+      console.log("Pagamento recebido:", txid)
+
+      // aqui vamos depois identificar qual proxy recarregar
+
+    }
+
+    res.sendStatus(200)
+
+  } catch (err) {
+
+    console.log(err)
+    res.sendStatus(500)
+
+  }
+
 })
 
 app.listen(3000, () => {
