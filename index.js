@@ -92,7 +92,13 @@ app.post("/criar-pix", async (req,res)=>{
 // WEBHOOK EFI
 app.post("/webhook", async (req,res)=>{
 
-  try{
+  console.log("WEBHOOK RECEBIDO")
+  console.log(req.headers)
+  console.log(req.body)
+
+  res.status(200).send("ok")
+
+})
 
     const pix = req.body.pix
 
