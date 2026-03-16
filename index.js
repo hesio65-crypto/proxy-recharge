@@ -2,7 +2,6 @@ const express = require("express")
 const Gerencianet = require("gn-api-sdk-node")
 const crypto = require("crypto")
 const axios = require("axios")
-const db = require("./database")
 
 const app = express()
 app.use(express.json())
@@ -33,6 +32,7 @@ const planos = {
 
 // MEMÓRIA TEMP
 const pagamentos = {}
+const vendas = []
 
 // GERAR TXID
 function gerarTxid(){
@@ -85,11 +85,14 @@ app.post("/criar-pix", async (req,res)=>{
   const txid = gerarTxid()
 
   // salvar venda
-  db.run(
-   "INSERT INTO vendas (txid,subuser_id,gigas,valor,status) VALUES (?,?,?,?,?)",
-   [txid,subuser_id,gigas,valor,"PENDENTE"]
-  )
-
+   vendas.push({
+ txid,
+ subuser_id,
+ gigas,
+ valor,
+ status:"PENDENTE",
+ data:new Date()
+})
   try{
 
     const charge = await gn.pixCreateCharge(
@@ -159,10 +162,11 @@ app.post("/webhook/pix", async (req,res)=>{
 
       console.log("PIX pago:",txid)
 
-      db.run(
-       "UPDATE vendas SET status='PAGO' WHERE txid=?",
-       [txid]
-      )
+      
+       const venda = vendas.find(v => v.txid === txid)
+if(venda){
+ venda.status = "PAGO"
+}
 
       console.log("SUBUSER:",subuser_id)
       console.log("GB:",gigas)
@@ -198,14 +202,7 @@ app.post("/webhook/pix", async (req,res)=>{
 
 // PAINEL DE VENDAS
 app.get("/admin/vendas",(req,res)=>{
-
- db.all(
-   "SELECT * FROM vendas ORDER BY data DESC",
-   (err,rows)=>{
-     res.json(rows)
-   }
- )
-
+ res.json(vendas)
 })
 
 // INICIAR SERVIDOR
