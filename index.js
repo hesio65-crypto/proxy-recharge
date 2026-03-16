@@ -2,6 +2,7 @@ const express = require("express")
 const Gerencianet = require("gn-api-sdk-node")
 const crypto = require("crypto")
 const axios = require("axios")
+const db = require("./database")
 
 const app = express()
 app.use(express.json())
@@ -30,6 +31,7 @@ const planos = {
   20:97
 }
 
+ HEAD
  HEAD
 // MEMÓRIA TEMP
 const pagamentos = {}
@@ -79,11 +81,47 @@ app.post("/criar-pix", async (req,res)=>{
 
 
 // MEMÓRIA TEMPORÁRIA
+
+// MEMÓRIA TEMP
+ 9eb266c (painel de vendas)
 const pagamentos = {}
 
 // GERAR TXID
-function gerarTxid() {
+function gerarTxid(){
   return crypto.randomBytes(16).toString("hex")
+}
+
+async function recarregarProxy(subuser_id,gigas){
+
+  console.log("Gerando token DataImpulse")
+
+  const auth = await axios.post(
+    "https://api.dataimpulse.com/reseller/user/token/get",
+    {
+      login:DI_LOGIN,
+      password:DI_PASSWORD
+    }
+  )
+
+  const token = auth.data.token
+
+  console.log("Token obtido")
+
+  const recharge = await axios.post(
+    "https://api.dataimpulse.com/reseller/sub-user/balance/add",
+    {
+      subuser_id,
+      traffic:gigas
+    },
+    {
+      headers:{
+        Authorization:`Bearer ${token}`
+      }
+    }
+  )
+
+  return recharge.data
+
 }
 
 // GERAR PIX
@@ -99,6 +137,7 @@ app.post("/criar-pix", async (req,res)=>{
   const valor = planos[gigas].toFixed(2)
   const txid = gerarTxid()
 
+ HEAD
  HEAD
   try{
 
@@ -126,10 +165,30 @@ app.post("/criar-pix", async (req,res)=>{
     const charge = await gn.pixCreateCharge(params,body)
  7da54b8 (adicionando sqlite3)
 
+// salvar venda no banco
+db.run(
+ "INSERT INTO vendas (txid,subuser_id,gigas,valor,status) VALUES (?,?,?,?,?)",
+ [txid,subuser_id,gigas,valor,"PENDENTE"]
+)
+
+  try{
+
+    const charge = await gn.pixCreateCharge(
+      {txid},
+      {
+        calendario:{expiracao:3600},
+        valor:{original:valor},
+        chave:"9f3141e7-865a-4411-bbcd-b1a7c30fd7c3",
+        solicitacaoPagador:"Recarga Proxy"
+      }
+    )
+ 9eb266c (painel de vendas)
+
     const qr = await gn.pixGenerateQRCode({
       id:charge.loc.id
     })
 
+ HEAD
  HEAD
     pagamentos[txid] = {
       subuser_id,
@@ -142,6 +201,12 @@ app.post("/criar-pix", async (req,res)=>{
       gigas,
       status:"aguardando"
  7da54b8 (adicionando sqlite3)
+
+    pagamentos[txid] = {
+      subuser_id,
+      gigas,
+      status:"PENDENTE"
+ 9eb266c (painel de vendas)
     }
 
     res.json({
@@ -160,12 +225,17 @@ app.post("/criar-pix", async (req,res)=>{
 })
 
  HEAD
+ HEAD
 // WEBHOOK
 app.post("/webhook/pix", async (req,res)=>{
 
 // WEBHOOK EFI
 app.post("/webhook", async (req,res)=>{
  7da54b8 (adicionando sqlite3)
+
+// WEBHOOK
+app.post("/webhook/pix", async (req,res)=>{
+ 9eb266c (painel de vendas)
 
   try{
 
@@ -176,6 +246,7 @@ app.post("/webhook", async (req,res)=>{
     }
 
  HEAD
+ HEAD
     for(const pagamentoPix of pix){
 
       const txid = pagamentoPix.txid
@@ -185,15 +256,24 @@ app.post("/webhook", async (req,res)=>{
       const txid = pagamento.txid
  7da54b8 (adicionando sqlite3)
 
+    for(const pagamentoPix of pix){
+
+      const txid = pagamentoPix.txid
+ 9eb266c (painel de vendas)
+
       if(!pagamentos[txid]){
         continue
       }
 
  HEAD
+ HEAD
+
+ 9eb266c (painel de vendas)
       const pagamento = pagamentos[txid]
 
       if(pagamento.status !== "PENDENTE"){
         console.log("Webhook duplicado ignorado:",txid)
+ HEAD
         continue
       }
 
@@ -222,42 +302,45 @@ app.post("/webhook", async (req,res)=>{
       }
 
       if(pagamentos[txid].status === "pago"){
+
+ 9eb266c (painel de vendas)
         continue
       }
 
-      const {subuser_id,gigas} = pagamentos[txid]
+      pagamento.status = "PROCESSANDO"
+
+      const {subuser_id,gigas} = pagamento
 
       console.log("PIX pago:",txid)
 
-      // gerar token DataImpulse
-      const auth = await axios.post(
-        "https://api.dataimpulse.com/reseller/user/token/get",
-        {
-          login:DI_LOGIN,
-          password:DI_PASSWORD
-        }
-      )
+db.run(
+ "UPDATE vendas SET status='PAGO' WHERE txid=?",
+ [txid]
+)
 
-      const token = auth.data.token
+      console.log("SUBUSER:",subuser_id)
+      console.log("GB:",gigas)
 
-      // recarregar proxy
-      const recharge = await axios.post(
-        "https://api.dataimpulse.com/reseller/sub-user/balance/add",
-        {
-          subuser_id:subuser_id,
-          traffic:gigas
-        },
-        {
-          headers:{
-            Authorization:`Bearer ${token}`
-          }
-        }
-      )
+      try{
 
-      console.log("Proxy recarregada:",recharge.data)
+        const resultado = await recarregarProxy(subuser_id,gigas)
 
+ HEAD
       pagamentos[txid].status = "pago"
  7da54b8 (adicionando sqlite3)
+
+        console.log("Recarga feita:",resultado)
+
+        pagamento.status = "CONCLUIDO"
+
+      }catch(err){
+
+        console.log("Erro recarga:",err.message)
+
+        pagamento.status = "ERRO"
+
+      }
+ 9eb266c (painel de vendas)
 
     }
 
@@ -270,12 +353,29 @@ app.post("/webhook", async (req,res)=>{
 
   }
 
+app.get("/admin/vendas",(req,res)=>{
+
+ db.all(
+   "SELECT * FROM vendas ORDER BY data DESC",
+   (err,rows)=>{
+     res.json(rows)
+   }
+ )
+
+})
+
+app.listen(3000,()=>{
+ console.log("Servidor rodando")
 })
 
 app.listen(3000,()=>{
   console.log("Servidor rodando")
  HEAD
+ HEAD
 })
 
 })
  7da54b8 (adicionando sqlite3)
+
+})
+ 9eb266c (painel de vendas)
