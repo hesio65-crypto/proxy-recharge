@@ -115,6 +115,8 @@ app.post("/webhook/pix", async (req,res)=>{
       const {subuser_id,gigas} = pagamentos[txid]
 
       console.log("PIX pago:",txid)
+      console.log("SUBUSER ID:", subuser_id)
+console.log("GIGAS COMPRADOS:", gigas)
 
       // gerar token DataImpulse
       const auth = await axios.post(
