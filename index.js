@@ -30,6 +30,7 @@ const planos = {
   20:97
 }
 
+ HEAD
 // MEMÓRIA TEMP
 const pagamentos = {}
 
@@ -76,6 +77,21 @@ app.post("/criar-pix", async (req,res)=>{
 
   const {subuser_id,gigas} = req.body
 
+
+// MEMÓRIA TEMPORÁRIA
+const pagamentos = {}
+
+// GERAR TXID
+function gerarTxid() {
+  return crypto.randomBytes(16).toString("hex")
+}
+
+// GERAR PIX
+app.post("/criar-pix", async (req,res)=>{
+
+  const {subuser_id,gigas} = req.body
+
+ 7da54b8 (adicionando sqlite3)
   if(!planos[gigas]){
     return res.json({erro:"plano inválido"})
   }
@@ -83,6 +99,7 @@ app.post("/criar-pix", async (req,res)=>{
   const valor = planos[gigas].toFixed(2)
   const txid = gerarTxid()
 
+ HEAD
   try{
 
     const charge = await gn.pixCreateCharge(
@@ -95,14 +112,36 @@ app.post("/criar-pix", async (req,res)=>{
       }
     )
 
+  const params = {txid}
+
+  const body = {
+    calendario:{expiracao:3600},
+    valor:{original:valor},
+    chave:"9f3141e7-865a-4411-bbcd-b1a7c30fd7c3",
+    solicitacaoPagador:"Recarga Proxy"
+  }
+
+  try{
+
+    const charge = await gn.pixCreateCharge(params,body)
+ 7da54b8 (adicionando sqlite3)
+
     const qr = await gn.pixGenerateQRCode({
       id:charge.loc.id
     })
 
+ HEAD
     pagamentos[txid] = {
       subuser_id,
       gigas,
       status:"PENDENTE"
+
+    // salvar pagamento
+    pagamentos[txid] = {
+      subuser_id,
+      gigas,
+      status:"aguardando"
+ 7da54b8 (adicionando sqlite3)
     }
 
     res.json({
@@ -120,8 +159,13 @@ app.post("/criar-pix", async (req,res)=>{
 
 })
 
+ HEAD
 // WEBHOOK
 app.post("/webhook/pix", async (req,res)=>{
+
+// WEBHOOK EFI
+app.post("/webhook", async (req,res)=>{
+ 7da54b8 (adicionando sqlite3)
 
   try{
 
@@ -131,14 +175,21 @@ app.post("/webhook/pix", async (req,res)=>{
       return res.sendStatus(200)
     }
 
+ HEAD
     for(const pagamentoPix of pix){
 
       const txid = pagamentoPix.txid
+
+    for(const pagamento of pix){
+
+      const txid = pagamento.txid
+ 7da54b8 (adicionando sqlite3)
 
       if(!pagamentos[txid]){
         continue
       }
 
+ HEAD
       const pagamento = pagamentos[txid]
 
       if(pagamento.status !== "PENDENTE"){
@@ -170,6 +221,44 @@ app.post("/webhook/pix", async (req,res)=>{
 
       }
 
+      if(pagamentos[txid].status === "pago"){
+        continue
+      }
+
+      const {subuser_id,gigas} = pagamentos[txid]
+
+      console.log("PIX pago:",txid)
+
+      // gerar token DataImpulse
+      const auth = await axios.post(
+        "https://api.dataimpulse.com/reseller/user/token/get",
+        {
+          login:DI_LOGIN,
+          password:DI_PASSWORD
+        }
+      )
+
+      const token = auth.data.token
+
+      // recarregar proxy
+      const recharge = await axios.post(
+        "https://api.dataimpulse.com/reseller/sub-user/balance/add",
+        {
+          subuser_id:subuser_id,
+          traffic:gigas
+        },
+        {
+          headers:{
+            Authorization:`Bearer ${token}`
+          }
+        }
+      )
+
+      console.log("Proxy recarregada:",recharge.data)
+
+      pagamentos[txid].status = "pago"
+ 7da54b8 (adicionando sqlite3)
+
     }
 
     res.sendStatus(200)
@@ -185,4 +274,8 @@ app.post("/webhook/pix", async (req,res)=>{
 
 app.listen(3000,()=>{
   console.log("Servidor rodando")
+ HEAD
 })
+
+})
+ 7da54b8 (adicionando sqlite3)
