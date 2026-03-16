@@ -39,6 +39,7 @@ function gerarTxid(){
   return crypto.randomBytes(16).toString("hex")
 }
 
+// RECARREGAR PROXY
 async function recarregarProxy(subuser_id,gigas){
 
   console.log("Gerando token DataImpulse")
@@ -69,7 +70,6 @@ async function recarregarProxy(subuser_id,gigas){
   )
 
   return recharge.data
-
 }
 
 // GERAR PIX
@@ -84,11 +84,11 @@ app.post("/criar-pix", async (req,res)=>{
   const valor = planos[gigas].toFixed(2)
   const txid = gerarTxid()
 
-// salvar venda no banco
-db.run(
- "INSERT INTO vendas (txid,subuser_id,gigas,valor,status) VALUES (?,?,?,?,?)",
- [txid,subuser_id,gigas,valor,"PENDENTE"]
-)
+  // salvar venda
+  db.run(
+   "INSERT INTO vendas (txid,subuser_id,gigas,valor,status) VALUES (?,?,?,?,?)",
+   [txid,subuser_id,gigas,valor,"PENDENTE"]
+  )
 
   try{
 
@@ -114,8 +114,8 @@ db.run(
 
     res.json({
       txid,
-      pix:charge.pixCopiaECola,
-      qrcode:qr.imagemQrcode
+      pix: qr.qrcode,
+      qrcode: qr.imagemQrcode
     })
 
   }catch(err){
@@ -127,9 +127,7 @@ db.run(
 
 })
 
-})
-
-// WEBHOOK
+// WEBHOOK PIX
 app.post("/webhook/pix", async (req,res)=>{
 
   try{
@@ -198,7 +196,6 @@ app.post("/webhook/pix", async (req,res)=>{
 
 })
 
-
 // PAINEL DE VENDAS
 app.get("/admin/vendas",(req,res)=>{
 
@@ -210,7 +207,6 @@ app.get("/admin/vendas",(req,res)=>{
  )
 
 })
-
 
 // INICIAR SERVIDOR
 app.listen(3000,()=>{
