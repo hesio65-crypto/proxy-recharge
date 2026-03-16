@@ -96,20 +96,20 @@ app.post("/criar-pix", async (req,res)=>{
     )
 
     const qr = await gn.pixGenerateQRCode({
-      id:charge.loc.id
-    })
+  id:charge.loc.id
+})
 
-    pagamentos[txid] = {
-      subuser_id,
-      gigas,
-      status:"PENDENTE"
-    }
+pagamentos[txid] = {
+  subuser_id,
+  gigas,
+  status:"PENDENTE"
+}
 
-    res.json({
-      txid,
-      pix:charge.pixCopiaECola,
-      qrcode:qr.imagemQrcode
-    })
+res.json({
+  txid,
+  pix: qr.qrcode,
+  qrcode: qr.imagemQrcode
+})
 
   }catch(err){
 
