@@ -83,7 +83,7 @@ app.post("/criar-pix", async (req,res)=>{
 // MEMÓRIA TEMPORÁRIA
 
 // MEMÓRIA TEMP
- 9eb266c (painel de vendas)
+ 
 const pagamentos = {}
 
 // GERAR TXID
@@ -129,7 +129,7 @@ app.post("/criar-pix", async (req,res)=>{
 
   const {subuser_id,gigas} = req.body
 
- 7da54b8 (adicionando sqlite3)
+ 
   if(!planos[gigas]){
     return res.json({erro:"plano inválido"})
   }
@@ -163,7 +163,7 @@ app.post("/criar-pix", async (req,res)=>{
   try{
 
     const charge = await gn.pixCreateCharge(params,body)
- 7da54b8 (adicionando sqlite3)
+ 
 
 // salvar venda no banco
 db.run(
@@ -182,7 +182,7 @@ db.run(
         solicitacaoPagador:"Recarga Proxy"
       }
     )
- 9eb266c (painel de vendas)
+ 
 
     const qr = await gn.pixGenerateQRCode({
       id:charge.loc.id
@@ -200,13 +200,13 @@ db.run(
       subuser_id,
       gigas,
       status:"aguardando"
- 7da54b8 (adicionando sqlite3)
+ 
 
     pagamentos[txid] = {
       subuser_id,
       gigas,
       status:"PENDENTE"
- 9eb266c (painel de vendas)
+ 
     }
 
     res.json({
@@ -231,11 +231,11 @@ app.post("/webhook/pix", async (req,res)=>{
 
 // WEBHOOK EFI
 app.post("/webhook", async (req,res)=>{
- 7da54b8 (adicionando sqlite3)
+ 
 
 // WEBHOOK
 app.post("/webhook/pix", async (req,res)=>{
- 9eb266c (painel de vendas)
+ 
 
   try{
 
@@ -254,12 +254,12 @@ app.post("/webhook/pix", async (req,res)=>{
     for(const pagamento of pix){
 
       const txid = pagamento.txid
- 7da54b8 (adicionando sqlite3)
+ 
 
     for(const pagamentoPix of pix){
 
       const txid = pagamentoPix.txid
- 9eb266c (painel de vendas)
+ 
 
       if(!pagamentos[txid]){
         continue
@@ -268,7 +268,7 @@ app.post("/webhook/pix", async (req,res)=>{
  HEAD
  HEAD
 
- 9eb266c (painel de vendas)
+ 
       const pagamento = pagamentos[txid]
 
       if(pagamento.status !== "PENDENTE"){
@@ -303,7 +303,7 @@ app.post("/webhook/pix", async (req,res)=>{
 
       if(pagamentos[txid].status === "pago"){
 
- 9eb266c (painel de vendas)
+ 
         continue
       }
 
@@ -327,7 +327,7 @@ db.run(
 
  HEAD
       pagamentos[txid].status = "pago"
- 7da54b8 (adicionando sqlite3)
+ 
 
         console.log("Recarga feita:",resultado)
 
@@ -340,7 +340,7 @@ db.run(
         pagamento.status = "ERRO"
 
       }
- 9eb266c (painel de vendas)
+ 
 
     }
 
@@ -375,7 +375,7 @@ app.listen(3000,()=>{
 })
 
 })
- 7da54b8 (adicionando sqlite3)
+ 
 
 })
- 9eb266c (painel de vendas)
+ 
