@@ -108,7 +108,7 @@ app.post("/criar-pix", async (req, res) => {
       {
         calendario: { expiracao: 3600 },
         valor: { original: valor },
-        chave: "9f3141e7-865a-4411-bbcd-b1a7c30fd7c3",
+        chave: "fe315884-6d12-45fd-b7aa-c1f6bdb411cd",
         solicitacaoPagador: "Recarga Proxy"
       }
     );
