@@ -9,8 +9,8 @@ app.use(express.json())
 // EFI
 const options = {
   sandbox:false,
-  client_id:"Client_Id_fcfd084f91d7629ee4a0dd4f4330007572c259f7",
-  client_secret:"Client_Secret_eab1cd11838ecd28eee1a454e53a94b5a9afb157",
+  client_id:"Client_Id_c9775ea6d0d7c3666de6cbf6be902a4e80caa2a0",
+  client_secret:"Client_Secret_3683b7706c12cfadfbfec0c4e5212b966e5f2c75",
   certificate:"./producao-854589-recargahz.p12"
 }
 
