@@ -131,7 +131,7 @@ app.post("/criar-pix", async (req,res)=>{
 })
 
 // WEBHOOK PIX
-app.post("/webhook/pix", async (req,res)=>{
+app.post("/webhook", async (req,res)=>{
 
   try{
 
@@ -203,6 +203,28 @@ if(venda){
 // PAINEL DE VENDAS
 app.get("/admin/vendas",(req,res)=>{
  res.json(vendas)
+})
+
+app.get("/ativar-webhook", async (req,res)=>{
+
+  try{
+
+    const response = await gn.pixConfigWebhook(
+      { chave: "9f3141e7-865a-4411-bbcd-b1a7c30fd7c3" },
+      { webhookUrl: "https://proxy-recharge-production.up.railway.app/webhook" }
+    )
+
+    console.log("WEBHOOK ATIVADO:",response)
+
+    res.json(response)
+
+  }catch(err){
+
+    console.log(err)
+    res.json(err)
+
+  }
+
 })
 
 // INICIAR SERVIDOR
