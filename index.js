@@ -131,7 +131,7 @@ app.post("/criar-pix", async (req,res)=>{
 })
 
 // WEBHOOK PIX (TESTE)
-app.post("/webhook", (req,res)=>{
+app.post("/webhook", async (req,res)=>{
   console.log("🔥 WEBHOOK CHEGOU");
   console.log(JSON.stringify(req.body, null, 2));
   res.sendStatus(200);
