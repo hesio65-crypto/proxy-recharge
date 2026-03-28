@@ -138,6 +138,11 @@ app.post("/criar-pix", async (req, res) => {
 /* =========================
    WEBHOOK PIX (igual ao seu)
 ========================= */
+app.post("/webhook", (req, res) => {
+  console.log("🔥 BATEU /webhook");
+  res.sendStatus(200);
+});
+
 app.post("/webhook/pix", async (req, res) => {
   try {
     const pix = req.body.pix;
