@@ -11,9 +11,9 @@ app.use(express.json());
 ========================= */
 const options = {
   sandbox: false,
-  client_id: "Client_Id_c9775ea6d0d7c3666de6cbf6be902a4e80caa2a0",
-  client_secret: "Client_Secret_3683b7706c12cfadfbfec0c4e5212b966e5f2c75",
-  certificate: "./producao-854589-recargahz.p12"
+  client_id: "Client_Id_e046cc4d504b2b55d5225e20bd7c954432768735",
+  client_secret: "Client_Secret_1b87c103c6a31c23c54d83f63e4e59b5b9e37d77",
+  certificate: "./producao-854589-rekarga.p12"
 };
 
 const gn = new Gerencianet(options);
