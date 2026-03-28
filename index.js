@@ -81,6 +81,17 @@ async function recarregarProxy(subuser_id, gigas) {
 }
 
 /* =========================
+   TESTE (IMPORTANTE)
+========================= */
+app.get("/", (req, res) => {
+  res.send("API ONLINE");
+});
+
+app.get("/teste", (req, res) => {
+  res.send("TESTE OK");
+});
+
+/* =========================
    GERAR PIX
 ========================= */
 app.post("/criar-pix", async (req, res) => {
@@ -130,17 +141,20 @@ app.post("/criar-pix", async (req, res) => {
     });
 
   } catch (err) {
-    console.log(err);
+    console.log("Erro ao criar PIX:", err);
     res.json(err);
   }
 });
 
 /* =========================
-   WEBHOOK PIX (igual ao seu)
+   WEBHOOK PIX (CORRIGIDO)
 ========================= */
 app.post("/webhook/pix", async (req, res) => {
   try {
-    const pix = req.body.pix;
+    console.log("🔥 WEBHOOK RECEBIDO");
+    console.log(JSON.stringify(req.body, null, 2));
+
+    const pix = req.body?.pix;
 
     if (!pix) {
       return res.sendStatus(200);
@@ -149,12 +163,17 @@ app.post("/webhook/pix", async (req, res) => {
     for (const pagamentoPix of pix) {
       const txid = pagamentoPix.txid;
 
-      if (!pagamentos[txid]) continue;
+      console.log("PIX recebido:", txid);
+
+      if (!pagamentos[txid]) {
+        console.log("TXID não encontrado:", txid);
+        continue;
+      }
 
       const pagamento = pagamentos[txid];
 
       if (pagamento.status !== "PENDENTE") {
-        console.log("Webhook duplicado ignorado:", txid);
+        console.log("Duplicado ignorado:", txid);
         continue;
       }
 
@@ -162,13 +181,11 @@ app.post("/webhook/pix", async (req, res) => {
 
       const { subuser_id, gigas } = pagamento;
 
-      console.log("PIX pago:", txid);
+      console.log("SUBUSER:", subuser_id);
+      console.log("GB:", gigas);
 
       const venda = vendas.find(v => v.txid === txid);
       if (venda) venda.status = "PAGO";
-
-      console.log("SUBUSER:", subuser_id);
-      console.log("GB:", gigas);
 
       try {
         const resultado = await recarregarProxy(subuser_id, gigas);
@@ -186,8 +203,8 @@ app.post("/webhook/pix", async (req, res) => {
     res.sendStatus(200);
 
   } catch (err) {
-    console.log(err);
-    res.sendStatus(500);
+    console.log("Erro webhook:", err);
+    res.sendStatus(200);
   }
 });
 
@@ -199,8 +216,10 @@ app.get("/admin/vendas", (req, res) => {
 });
 
 /* =========================
-   START
+   START (CORRIGIDO)
 ========================= */
-app.listen(3000, () => {
-  console.log("Servidor rodando");
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("Servidor rodando na porta", PORT);
 });
